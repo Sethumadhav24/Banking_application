@@ -1,9 +1,6 @@
 package com.banking.Banking_application.controller;
 
-import com.banking.Banking_application.dto.BankResponse;
-import com.banking.Banking_application.dto.EmailDetails;
-import com.banking.Banking_application.dto.EnquiryRequest;
-import com.banking.Banking_application.dto.UserRequest;
+import com.banking.Banking_application.dto.*;
 import com.banking.Banking_application.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,4 +24,13 @@ public class UserController {
     public String nameEnquiry(@RequestBody EnquiryRequest request){
         return userService.nameEnquiry(request);
     }
+    @PostMapping("credit")
+    public BankResponse creditAccount(@RequestBody CreditDebitRequest request){
+        return userService.creditAccount(request);
+    }
+    @PostMapping("debit")
+    public BankResponse debitAmount(@RequestBody CreditDebitRequest request){
+        return userService.debitAccount(request);
+    }
+
 }
