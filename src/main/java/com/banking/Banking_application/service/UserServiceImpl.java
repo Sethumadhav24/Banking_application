@@ -163,4 +163,62 @@ public class UserServiceImpl implements UserService {
                     .build();
         }
     }
+    // implementing the Transfer method (i.e Debit from acc to Credit to another acc)
+    @Override
+    public BankResponse transfer(TransferRequest request) {
+        Boolean isSourceAccountNumberExist = userRepository.existsByAccountNumber(request.getSourceAccountNumber());
+        Boolean isDestinationAccountNumberExist = userRepository.existsByAccountNumber((request.getDestinationAccountNumber()));
+
+        if(!isSourceAccountNumberExist){ // check if the source acc number is exist  not
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+
+        if(!isDestinationAccountNumberExist){ // check if the destination acc number is exist or not
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+        Users sourceAccountUser = userRepository.findByAccountNumber(request.getSourceAccountNumber());
+        if(request.getAmount().compareTo(sourceAccountUser.getAccountBalance()) > 0){ // check debit amount > credit amount
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.INSUFFICIENT_BALANCE_CODE)
+                    .responseMessage(AccountUtils.INSUFFICIENT_BALANCE_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+        sourceAccountUser.setAccountBalance(sourceAccountUser.getAccountBalance().subtract(request.getAmount()));
+        userRepository.save(sourceAccountUser);
+
+        EmailDetails debitAlert = EmailDetails.builder() // sent email alert to respective source account
+                .recipient(sourceAccountUser.getEmail())
+                .subject("DEBIT ALERT")
+                .messageBody("The sum of " + " " + request.getAmount() + " " + " has been debited from your account and your account balance: " + " " + sourceAccountUser.getAccountBalance())
+                .build();
+
+        emailService.sendEmailAlert(debitAlert);
+
+        Users destinationAccountUser = userRepository.findByAccountNumber(request.getDestinationAccountNumber());
+        destinationAccountUser.setAccountBalance(destinationAccountUser.getAccountBalance().add(request.getAmount()));
+        userRepository.save(destinationAccountUser);
+
+        EmailDetails creditAlert = EmailDetails.builder() // sent email alert to respective destination account
+                .recipient(destinationAccountUser.getEmail())
+                .subject("CREDIT ALERT")
+                .messageBody("The sum of " + " " + request.getAmount() + " " + " has been credited to your account and your account balance: " + " " + destinationAccountUser.getAccountBalance())
+                .build();
+
+        emailService.sendEmailAlert(creditAlert);
+
+        return BankResponse.builder()
+                .responseCode(AccountUtils.TRANSFER_SUCCESSFUL_CODE)
+                .responseMessage(AccountUtils.TRANSFER_SUCCESSFUL_MESSAGE)
+                .accountInfo(null)
+                .build();
+    }
 }

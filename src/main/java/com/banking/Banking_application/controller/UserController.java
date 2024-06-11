@@ -32,5 +32,9 @@ public class UserController {
     public BankResponse debitAmount(@RequestBody CreditDebitRequest request){
         return userService.debitAccount(request);
     }
+    @PostMapping("transfer")
+    public BankResponse transfer(@RequestBody TransferRequest request){
+        return userService.transfer(request);
+    }
 
 }
