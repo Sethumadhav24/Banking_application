@@ -7,16 +7,13 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class AccountInfo {
-
-    private String accountName;
-
-    private BigDecimal accountBalance;
-
+@AllArgsConstructor
+@Builder
+@Data
+public class TransactionDto {
+    private String transactionType;
+    private BigDecimal amount;
     private String accountNumber;
-
+    private String status;
 }

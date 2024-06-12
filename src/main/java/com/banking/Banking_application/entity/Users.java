@@ -51,5 +51,4 @@ public class Users {
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
 
-
 }
