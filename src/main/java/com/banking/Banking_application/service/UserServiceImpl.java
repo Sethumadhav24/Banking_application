@@ -1,10 +1,15 @@
 package com.banking.Banking_application.service;
 
+import com.banking.Banking_application.config.JwtTokenProvider;
 import com.banking.Banking_application.dto.*;
+import com.banking.Banking_application.entity.Role;
 import com.banking.Banking_application.entity.Users;
 import com.banking.Banking_application.repository.UserRepository;
 import com.banking.Banking_application.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +30,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    @Autowired
+    JwtTokenProvider jwtTokenProvider;
 
     @Override
     public BankResponse createAccount(UserRequest userRequest) {
@@ -52,6 +63,7 @@ public class UserServiceImpl implements UserService {
                 .phoneNumber(userRequest.getPhoneNumber())
                 .alterNativePhoneNumber(userRequest.getAlterNativePhoneNumber())
                 .status("ACTIVE")
+                .role(Role.valueOf("ROLE_ADMIN"))
                 .build();
 
         Users saverUser = userRepository.save(newUser);
@@ -74,7 +86,27 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    @Override
+
+    public BankResponse login(LoginDto loginDto){
+        Authentication authentication;
+        authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
+        );
+
+        EmailDetails loginAlert = EmailDetails.builder()
+                .subject("You are logged in!")
+                .recipient(loginDto.getEmail())
+                .messageBody("You logged into your account")
+                .build();
+
+        emailService.sendEmailAlert(loginAlert);
+        return  BankResponse.builder()
+                .responseCode("Login Success")
+                .responseMessage(jwtTokenProvider.generateToken(authentication))
+                .build();
+    }
+
+
     public BankResponse balanceEnquiry(EnquiryRequest request) {
        //check if the provider account number exists in the DB
         boolean isAccountExist = userRepository.existsByAccountNumber(request.getAccountNumber());
@@ -97,7 +129,7 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    @Override
+
     public String nameEnquiry(EnquiryRequest request) {
         //check if the provider account number exists in the DB
         boolean isAccountNumber = userRepository.existsByAccountNumber(request.getAccountNumber());
@@ -108,7 +140,7 @@ public class UserServiceImpl implements UserService {
         return foundUser.getFirstName() + " " + foundUser.getLastName() + " " + foundUser.getOtherName();
     }
 
-    @Override
+
     public BankResponse creditAccount(CreditDebitRequest request) {
         //check if the provider account number exists in the DB
         boolean isAccountExist = userRepository.existsByAccountNumber(request.getAccountNumber());
@@ -143,7 +175,7 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-    @Override
+
     public BankResponse debitAccount(CreditDebitRequest request) {
         //check if the provider account number exists in the DB
         boolean isAccountExist = userRepository.existsByAccountNumber(request.getAccountNumber());
@@ -188,8 +220,8 @@ public class UserServiceImpl implements UserService {
                     .build();
         }
     }
-    // implementing the Transfer method (i.e Debit from acc to Credit to another acc)
-    @Override
+    // implementing the Transfer method ( Debit from acc to Credit to another acc)
+
     public BankResponse transfer(TransferRequest request) {
         Boolean isSourceAccountNumberExist = userRepository.existsByAccountNumber(request.getSourceAccountNumber());
         Boolean isDestinationAccountNumberExist = userRepository.existsByAccountNumber((request.getDestinationAccountNumber()));
