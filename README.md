@@ -1,4 +1,4 @@
-◦ Developing secure online banking application using Spring Boot, Java, MySQL, and implementing user authentication/authorization with Spring Security.
+◦ Developing secure online banking application using Java, Spring Boot, MySQL, and implementing user authentication/authorization with Spring Security.
 
 ◦ Adding real-time notification systems for sign-up, transaction alerts via email, and building RESTful APIs for managing accounts, transactions, balances, etc.
 
